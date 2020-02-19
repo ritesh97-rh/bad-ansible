@@ -72,7 +72,7 @@
       path: /usr/share/tomcat/webapps/ROOT
       state: directory
 
-  - name: copy static index.html to tomcat webapps/ansible/index.html
+  - name: copy static index.html to tomcat webapps/ROOT/index.html
     template:
       src: index.html.j2
       dest: /usr/share/tomcat/webapps/ROOT/index.html
@@ -89,35 +89,55 @@
   become: true
 
   tasks:
+  - name: create ansible directory
+    file: 
+      path: /usr/share/tomcat/webapps/ansible
+      state: directory
+      owner: root
+      group: root
+      mode: u=rwx,go=rx
+
   - name: copy static index.html to tomcat webapps/ansible/index.html
     template:
-      src: index.html.app1
+      src: index.html.j2
       dest: /usr/share/tomcat/webapps/ansible/index.html
+      mode: u=rw,go=r
 
-- name: index.html on app 1
+- name: index.html on app 2
   hosts: app2
   gather_facts: false
   become: true
 
   tasks:
+  - name: create ansible directory
+    file: 
+      path: /usr/share/tomcat/webapps/ansible
+      state: directory
+      owner: root
+      group: root
+      mode: u=rwx,go=rx
+
   - name: copy static index.html to tomcat webapps/ansible/index.html
     template:
-      src: index.html.app2
+      src: index.html.j2
       dest: /usr/share/tomcat/webapps/ansible/index.html
+      mode: u=rw,go=r
 
 - name: deploy postgres
-  hosts: apps
+#  hosts: apps
   gather_facts: false
   become: true
   hosts: appdbs
   tasks:
-  - name: install progress
-    command: "yum install -y postgresql-server"
+#  - name: install progress
+#    command: "yum install -y postgresql-server"
+#    when: >- (turn nl into space)
+#    'appdbs' in group_names
 
-  #- name: install postgres
-  #  yum:
-  #    name: postgresql-server
-  #    state: latest
+  - name: install postgres
+    yum:
+      name: postgresql-server
+      state: latest
   - name: enable apache at boot
     service:
       name: postgresql
@@ -125,7 +145,6 @@
   - name: tell user to finish setting up postgres
     debug:
       msg: "Either uncomment the postgres setup or manually login and initialize"
-
  # only run the next 2 tasks once!
 #  - name: initilize postgres
 #    command: postgresql-setup initdb
@@ -140,7 +159,7 @@
   hosts: apps
   gather_facts: false
   become: true
-  hosts: apps
+
   tasks:
   - name: install apache
     yum:
@@ -150,7 +169,7 @@
     service:
       name: httpd
       enabled: yes
-#  - name: start apache
-#    service:
-#      name: httpd
-#      state: started
+  - name: start apache
+    service:
+      name: httpd
+      state: started
